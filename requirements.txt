@@ -1,0 +1,31 @@
+# non specific versions
+fastapi[standard]
+uvicorn[standard]
+SQLAlchemy
+python-dotenv
+pymysql
+passlib
+PyJWT
+alembic
+cashfree_pg
+requests
+python-multipart
+
+
+# at time of deployment delete the versions folder which is inside alembic
+
+# AI requirements  for query and image upload
+langchain
+langchain_community
+langchain_openai
+pypdf
+chromadb==0.5.3          # won't work without this specific version
+
+
+# differential diagonise requirements
+openai
+tiktoken
+beautifulsoup4
+
+# case simulation requirements
+langchain[docarray]

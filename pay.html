@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cashfree Checkout Integration</title>
+        <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+    </head>
+    <body>
+        <div class="row">
+            <p>Click below to open the checkout page in popup</p>
+            <button id="renderBtn">Pay Now</button>
+        </div>
+        <script>
+            const cashfree = Cashfree({
+                mode: "sandbox",
+            });
+            document.getElementById("renderBtn").addEventListener("click", () => {
+                let checkoutOptions = {
+                    paymentSessionId: "session_gCZ82hYSQSukq3CIu18eemRXTjk81JJUV_BBudXgdjhXkyX65hOBf5W2s9XPMdFiE1dKs2nsHJthYDbcV1TAe6VxeuH3dwMBBqS8EDPGElaU",
+                    redirectTarget: "_modal",
+                };
+                cashfree.checkout(checkoutOptions).then((result) => {
+                    if(result.error){
+                        // This will be true whenever user clicks on close icon inside the modal or any error happens during the payment
+                        alert("User has closed the popup or there is some payment error, Check for Payment Status");
+                        alert(result.error);
+                    }
+                    if(result.redirect){
+                        // This will be true when the payment redirection page couldnt be opened in the same window
+                        // This is an exceptional case only when the page is opened inside an inAppBrowser
+                        // In this case the customer will be redirected to return url once payment is completed
+                        alert("Payment will be redirected");
+                    }
+                    if(result.paymentDetails){
+                        // This will be called whenever the payment is completed irrespective of transaction status
+                        // Call fetchfetch-order-id apis to know the status of order
+                        alert("Payment has been completed, Check for Payment Status");
+                        alert(result.paymentDetails.paymentMessage);
+                    }
+                });
+            });
+        </script>
+    </body>
+</html> 
