@@ -128,7 +128,7 @@ async def differential_diagonise_api(question:str):
 	{context}
     """
 	
-	llm = ChatOpenAI(model ="gpt-4o-mini", temperature=0.7, max_tokens=450, api_key=OPEN_API_KEY)
+	llm = ChatOpenAI(model ="gpt-4o-mini", temperature=0.7, api_key=OPEN_API_KEY)
 
 	retriever = db.as_retriever(search_kwargs={"k":2})
 	QA_CHAIN_PROMPT = PromptTemplate.from_template(template)# Run chain
@@ -161,31 +161,33 @@ async def differential_diagonise_api(question:str):
 
 
 # below code is necessary to initiate the case simulation model
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, max_tokens=256, api_key=OPEN_API_KEY)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, api_key=OPEN_API_KEY)
 
 template = """
 Act as a medical expert and ask the user a question about a medical scenario.
 After the user responds, evaluate their answer and give them a score out of 10 on different parameters.
-Your question should randomly cover Infections, Flews, Pathology, Neurology, ECG, Cardiology, Accidents, Gynacology and more.
-Also remember to adjust the difficulty of questions based on user's previous score and be very strict while scoring.
-If the user score is less then 3 ask him easy question if between 4-7 ask medium and for rest ask harder questions.
-Explain why you gave that score.
+Always answer in standard *HTML5 tags* in only headings and points.
+Your question should *randomly cover* Anatomy, Micro-biology, Infections, Flews, Pathology, Neurology, Accidents, Gynacology and more.
+Ensure each question you ask is *unique* and covers a *different medical topic*.
+Also remember to adjust the difficulty of questions based on user's previous score and be *very strict while scoring*.
+If the user score is less then 20 ask him easy question if between 21-40 ask medium and for rest ask harder questions.
+Always provide a cumalative total score.
 {history}
 Question: {input}
-  "evaluation": 
-    "understanding_of_condition": 
+  "evaluation":
+    "understanding_of_condition":
       "score": ,
       "comments": ""
 
-    leadership_quality": 
+    leadership_quality":
       "score": ,
       "comments": ""
-    
-    "immediate_treatment": 
+
+    "immediate_treatment":
       "score": ,
       "comments": ""
-    
-    "overall_clinical_approach": 
+
+    "overall_clinical_approach":
       "score": ,
       "comments": ""
 """

@@ -165,8 +165,11 @@ async def register_user_country(user_id:int, session = Depends(get_session)):
     full_name_query = select(User.first_name, User.last_name).filter_by(id=user_id)
     
     # execute the query 
+    full_name_list = session.execute(full_name_query).fetchall()
+    if not full_name_list:
+        raise HTTPException(404, f"No user found with id {user_id}")
+    
     try:
-        full_name_list = session.execute(full_name_query).fetchall()
         session.commit()
         return {"full_name": full_name_list[0][0] + " " + full_name_list[0][1]}
 
