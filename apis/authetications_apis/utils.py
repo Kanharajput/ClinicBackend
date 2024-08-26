@@ -2,8 +2,14 @@ from passlib.context import CryptContext
 import datetime
 from datetime import timedelta
 import jwt 
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Annotated
+from jwt import PyJWTError
 
+
+# Define the OAuth2 scheme
+security = HTTPBearer()
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -50,3 +56,22 @@ def create_refresh_token(email: str):
         raise HTTPException(500, "Internal Server error")
 
     return encoded_token
+
+
+def authorize_user(authorization: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
+    if authorization.scheme == "Bearer": 
+        try:
+            payload = jwt.decode(authorization.credentials, JWT_ACCESS_SECRET_KEY, ALGORITHM)
+            return payload
+        except PyJWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    else:
+        raise HTTPException(
+            status_code=401, 
+            detail="Invalid scheme"
+        )
+

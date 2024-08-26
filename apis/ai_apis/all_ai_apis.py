@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, UploadFile, Depends
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
@@ -10,6 +10,8 @@ from langchain.schema.messages import HumanMessage
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
 from bs4 import BeautifulSoup
+from ..authetications_apis.utils import authorize_user
+
 
 
 import os
@@ -41,7 +43,7 @@ def extract_cases(section):
 
 
 @ai_router.get("/query/{question}")
-async def query_api(question:str):
+async def query_api(question:str, payload: dict = Depends(authorize_user)):
 
 	loader = PyPDFLoader("ai_req_docs/model_req/PharmacologyRevisionE6_5.pdf")
 	docs = loader.load()
@@ -85,7 +87,7 @@ async def query_api(question:str):
 
 # differential diagonise api
 @ai_router.get("/differential-diagonise")
-async def differential_diagonise_api(question:str):
+async def differential_diagonise_api(question:str, payload: dict = Depends(authorize_user)):
 	# change file to ECG Cases
 	loader = PyPDFLoader("ai_req_docs/model_req/PharmacologyRevisionE6_5.pdf")
 	documents = loader.load()
@@ -160,51 +162,51 @@ async def differential_diagonise_api(question:str):
 
 
 
-# below code is necessary to initiate the case simulation model
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, api_key=OPEN_API_KEY)
+# # below code is necessary to initiate the case simulation model
+# llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, api_key=OPEN_API_KEY)
 
-template = """
-Act as a medical expert and ask the user a question about a medical scenario.
-After the user responds, evaluate their answer and give them a score out of 10 on different parameters.
-Always answer in standard *HTML5 tags* in only headings and points.
-Your question should *randomly cover* Anatomy, Micro-biology, Infections, Flews, Pathology, Neurology, Accidents, Gynacology and more.
-Ensure each question you ask is *unique* and covers a *different medical topic*.
-Also remember to adjust the difficulty of questions based on user's previous score and be *very strict while scoring*.
-If the user score is less then 20 ask him easy question if between 21-40 ask medium and for rest ask harder questions.
-Always provide a cumalative total score.
-{history}
-Question: {input}
-  "evaluation":
-    "understanding_of_condition":
-      "score": ,
-      "comments": ""
+# template = """
+# Act as a medical expert and ask the user a question about a medical scenario.
+# After the user responds, evaluate their answer and give them a score out of 10 on different parameters.
+# Always answer in standard *HTML5 tags* in only headings and points.
+# Your question should *randomly cover* Anatomy, Micro-biology, Infections, Flews, Pathology, Neurology, Accidents, Gynacology and more.
+# Ensure each question you ask is *unique* and covers a *different medical topic*.
+# Also remember to adjust the difficulty of questions based on user's previous score and be *very strict while scoring*.
+# If the user score is less then 20 ask him easy question if between 21-40 ask medium and for rest ask harder questions.
+# Always provide a cumalative total score.
+# {history}
+# Question: {input}
+#   "evaluation":
+#     "understanding_of_condition":
+#       "score": ,
+#       "comments": ""
 
-    leadership_quality":
-      "score": ,
-      "comments": ""
+#     leadership_quality":
+#       "score": ,
+#       "comments": ""
 
-    "immediate_treatment":
-      "score": ,
-      "comments": ""
+#     "immediate_treatment":
+#       "score": ,
+#       "comments": ""
 
-    "overall_clinical_approach":
-      "score": ,
-      "comments": ""
-"""
+#     "overall_clinical_approach":
+#       "score": ,
+#       "comments": ""
+# """
 
-prompt = PromptTemplate(
-    input_variables=["history", "input"],
-    template=template
-)
+# prompt = PromptTemplate(
+#     input_variables=["history", "input"],
+#     template=template
+# )
 
-memory = ConversationBufferMemory(size=2)
+# memory = ConversationBufferMemory(size=2)
 
-conversation = ConversationChain(prompt=prompt,
-                                 llm=llm,
-                                 memory=memory)
+# conversation = ConversationChain(prompt=prompt,
+#                                  llm=llm,
+#                                  memory=memory)
 
 
 @ai_router.get("/case-simulation")
-async def case_simulation_api(user_input: str):
+async def case_simulation_api(user_input: str, payload: dict = Depends(authorize_user)):
     output = conversation.predict(input=user_input)
     return {"response": output}

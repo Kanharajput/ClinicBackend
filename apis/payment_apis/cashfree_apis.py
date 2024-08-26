@@ -9,6 +9,7 @@ from models.users import User
 from models.orders import Order
 from sqlalchemy import select, update, insert
 from database_conf.db_setup import get_session
+from ..authetications_apis.utils import authorize_user
 
 
 payment_api = APIRouter()
@@ -28,7 +29,7 @@ x_api_version = "2023-08-01"
 
 
 @payment_api.post("/generate-oder/{user_id}")
-async def generate_order(user_id:int, session = Depends(get_session)):
+async def generate_order(user_id:int, payload: dict = Depends(authorize_user), session = Depends(get_session)):
 	# fetch user details
 	user_data_query = select(User.phone_number).filter_by(id=user_id)
 	user_data = session.execute(user_data_query).fetchone()
@@ -68,7 +69,7 @@ async def generate_order(user_id:int, session = Depends(get_session)):
 
 
 @payment_api.get("/fetch-order-id/{user_id}")
-async def fetch_order_id(user_id:int, session = Depends(get_session)):
+async def fetch_order_id(user_id:int, payload: dict = Depends(authorize_user), session = Depends(get_session)):
 	# fetch order_id
 	fetch_order_id_query = select(Order.order_id).filter_by(id=user_id)
 	order_id = session.execute(fetch_order_id_query).scalar()
