@@ -3,7 +3,7 @@ from database_conf.db_setup import get_session
 from schemas.users import Registration, UserDetails, Login
 from models.users import User
 from sqlalchemy import select, update
-from .utils import get_hashed_password, verify_password, create_access_token, create_refresh_token, authorize_user
+from .utils import get_hashed_password, verify_password, create_access_token, create_refresh_token, validate_access_token, validate_refresh_token
 import requests
 import os
 from dotenv import load_dotenv
@@ -125,8 +125,14 @@ async def user_login(user_data:Login, session = Depends(get_session)):
     return {"access_token": access_token, "refresh_token": refresh_token, "user_id":user_id}
 
 
+# validate refresh token and generate a new access token
+@auth_api.post("/generate-access-token")
+async def generate_access_token(user_email: str = Depends(validate_refresh_token)):
+    return create_access_token(user_email)
+
+
 @auth_api.post("/register-user-country/{user_id}")
-async def register_user_country(user_id:int, user_ip:str, payload: dict = Depends(authorize_user), session = Depends(get_session)):
+async def register_user_country(user_id:int, user_ip:str, payload: dict = Depends(validate_access_token), session = Depends(get_session)):
     # Define API URL
     API_URL = f"https://apiip.net/api/check?accessKey={APIIP_SECRET_KEY}"
 
@@ -161,7 +167,7 @@ async def register_user_country(user_id:int, user_ip:str, payload: dict = Depend
 
 
 @auth_api.get("/get-full-name/{user_id}")
-async def register_user_country(user_id:int, payload: dict = Depends(authorize_user), session = Depends(get_session)):
+async def register_user_country(user_id:int, payload: dict = Depends(validate_access_token), session = Depends(get_session)):
 
     full_name_query = select(User.first_name, User.last_name).filter_by(id=user_id)
     

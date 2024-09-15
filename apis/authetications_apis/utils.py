@@ -58,20 +58,68 @@ def create_refresh_token(email: str):
     return encoded_token
 
 
-def authorize_user(authorization: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
+def validate_access_token(authorization: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
     if authorization.scheme == "Bearer": 
         try:
             payload = jwt.decode(authorization.credentials, JWT_ACCESS_SECRET_KEY, ALGORITHM)
-            return payload
+
         except PyJWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
+                detail="Invalid Access token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        
+        expires_at = payload.get("expire_at")
+        # Convert the string to a datetime object
+        expires_datetime = datetime.datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S.%f")
+        current_utc = datetime.datetime.utcnow()
+        print("here")
+        if current_utc > expires_datetime:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Access token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # token correct return the payload
+        return payload
+    
     else:
         raise HTTPException(
             status_code=401, 
             detail="Invalid scheme"
         )
+    
 
+def validate_refresh_token(authorization: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
+    if authorization.scheme == "Bearer": 
+        try:
+            payload = jwt.decode(authorization.credentials, JWT_REFRESH_SECRET_KEY, ALGORITHM)
+
+        except PyJWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        expires_at = payload.get("expire_at")
+        # Convert the string to a datetime object
+        expires_datetime = datetime.datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S.%f")
+        current_utc = datetime.datetime.utcnow()
+        if current_utc > expires_datetime:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # token correct return user email
+        return payload.get("email")
+    
+    else:
+        raise HTTPException(
+            status_code=401, 
+            detail="Invalid scheme"
+        )
